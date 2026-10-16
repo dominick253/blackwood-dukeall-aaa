@@ -73,13 +73,32 @@ func _build_environment() -> void:
 	env.volumetric_fog_detail_spread = 4.0
 	env.volumetric_fog_gi_inject = 0.0
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+
+	# Golden-hour sheen: glow on sun and headlights, gentle grade
+	env.glow_enabled = true
+	env.glow_strength = 0.35
+	env.glow_bloom = 0.04
+	env.glow_hdr_threshold = 1.1
+	env.set("glow_levels/1", 0.15)
+	env.set("glow_levels/2", 0.25)
+	env.set("glow_levels/3", 0.25)
+	env.set("glow_levels/4", 0.2)
+	env.set("glow_levels/5", 0.1)
+	env.set("adjustment_enabled", true)
+	env.set("adjustment_saturation", 1.08)
+	env.set("adjustment_contrast", 1.05)
+
+	# Procedural sky sun glow (4.7 exposes sun_curve/sun_angle_max only)
+	sky_mat.sun_curve = 0.6
+	sky_mat.sun_angle_max = 90.0
 	we.environment = env
 	add_child(we)
 
 	var sun := DirectionalLight3D.new()
 	sun.shadow_enabled = OS.get_environment("BDQ_NOSUNSH") == ""
-	sun.directional_shadow_max_distance = 60.0
+	sun.directional_shadow_max_distance = 110.0
 	sun.set_shadow_mode(DirectionalLight3D.SHADOW_ORTHOGONAL)
+	sun.directional_shadow_fade_split = 0.45
 	sun.light_angular_distance = 2.0
 	add_child(sun)
 

@@ -120,3 +120,25 @@ side-silhouette coherence not fully passing at cap; front/3-quarter views pass.
 - DEVIATION (viewmodel): front framing PASSES authored; 0.3m macro close-ups do not. Mitigations: (1) in-game viewmodel is viewed at 0.5-0.8m first-person, matching the passing framing; (2) brief 4.6 pins runtime glass override; (3) residual nail float is 1.8mm, sub-mm in first-person view. Known remaining work for a future pass: sculpted hand mesh (not primitive stacks) if AAA close-up bar is required.
 - FINAL: mower AUTHORED (r8 front: spokes/fenders/treads/step/exhaust confirmed; r7 close: seams+wear). oak/beech/dead ALL AUTHORED (r9-r12). viewmodel CONDITIONAL PASS (front) with logged deviation.
 - GLBs current: mower 8028, viewmodel 9980, oak 5332, beech 5028, dead 5136 tris. All within budgets.
+
+# RUNTIME LANE (in-game frames, harness captures)
+
+## Drive texture r7-r10
+- r7/r8: flat gray band despite packed pebble texture. RCA: box_in meshes have NO UV layer; UV-based image_texture_node sampled one pixel. Fix: bdq.uv_planar() planar projection in world meters.
+- r9: UVs fixed but still flat at distance - 3mm grain is sub-pixel beyond ~10m; repeating tiles average out. RCA: micro-grain cannot carry a long view; composition must.
+- r10: dedicated non-repeating 1024px drive map (128px/m lateral): wheel-rut lanes with grass creep, metre-scale tonal drift, damp patches, pale stone kerb material. DRIVE: AUTHORED (ruts + tonal variation + kerbs confirmed by reviewer).
+
+## Atmosphere
+- t01/t44 defect: blocky semi-transparent brown rectangles. A/B with volumetric fog disabled: gone. RCA: volumetric fog marchers under llvmpipe render blocky at ANY density. Volumetric fog is now OPT-IN (BDQ_VOLFOG=1); dusk mist via classic fog density ramp 0.004->0.020.
+- Sun energy 1.35->1.6; sky top deepened; glow (5 levels), filmic + adjustment grade (sat 1.08, con 1.05), MSAA 2x, shadow atlas 4096, shadow distance 110m.
+- Godot 4.7 property landmines verified by probe: glow_levels/1..7 (slash), adjustment_* singular, ProceduralSkyMaterial has only sun_curve/sun_angle_max (no sun_tint/sky_sun_color/show_sun).
+
+## Viewmodel runtime
+- t44 inspect: bottle was below frame. Fix: inspect pose (-0.04,-0.05,-0.45) + 32 deg telephoto. t44: AUTHORED (hands + green bottle centered).
+- Beer drain: liquid/foam meshes level-driven by slosh.volume_ratio.
+
+## Harness
+- v4 (fog on): 19.9 fps avg / 13.6 1%-low, 11 captures.
+- v6 (fog off, r10 terrain): 20.7 fps avg / 13.8 low.
+- All CPU: Xvfb + llvmpipe (no GPU). Floor, not target.
+- Aerial r10 reviewer note: PLACEHOLDER wording referred to absent scene context in an asset-isolated capture (rig loads terrain collection only); all three regression criteria passed. Context lives in in-game frames.
