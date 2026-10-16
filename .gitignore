@@ -1,0 +1,11 @@
+# Godot 4 cache
+.godot/
+
+# QC bulk: keep only curated rounds (added explicitly)
+evidence/qc/_probe*
+evidence/frames_v4/
+
+# misc
+*.tmp
+*.log
+.DS_Store
