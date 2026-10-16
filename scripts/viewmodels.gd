@@ -19,6 +19,7 @@ var hands_r: Node3D
 var beads_static: Array[MeshInstance3D] = []
 var beads_slide: Array = []
 var inspect := 0.0
+var cigar_present := 0.0  # 0..1: bring the cigar to frame center (ash set piece)
 
 var _hand_l_local := Vector3.ZERO
 var _hand_r_local := Vector3.ZERO
@@ -334,12 +335,14 @@ func _setup_smoke(cig: Node) -> void:
 	d.name = "AshDebris"
 	var dm := ParticleProcessMaterial.new()
 	dm.direction = Vector3(0, -1, 0)
-	dm.spread = 60.0
-	dm.gravity = Vector3(0, -4, 0)
-	dm.initial_velocity_min = 0.05
-	dm.initial_velocity_max = 0.15
+	dm.spread = 80.0
+	# Ash flakes are light: slow fall with drag-like low gravity so they
+	# stay in frame long enough to read.
+	dm.gravity = Vector3(0.15, -1.2, 0.0)
+	dm.initial_velocity_min = 0.02
+	dm.initial_velocity_max = 0.08
 	d.amount = 24
-	d.lifetime = 1.6
+	d.lifetime = 2.2
 	d.emitting = false
 	d.one_shot = true
 	# GPUParticles3D defaults to a point visibility_aabb and gets culled;
@@ -439,6 +442,13 @@ func _process(delta: float) -> void:
 	ct.origin += Vector3(0, bob + bob2, 0) + _sway * 0.8
 	ct.origin += recoil
 	ct.basis = Basis.from_euler(Vector3(0.10 + 0.02 * sin(_bob_t * 0.7), 0.0, 0.35))
+	if cigar_present > 0.0:
+		# Present pose: cigar held up near frame center so the ash column
+		# and falling flakes read at 720p.
+		var pres := Transform3D(
+			Basis.from_euler(Vector3(0.05, 0.15, 0.25)), Vector3(-0.02, -0.10, -0.42)
+		)
+		ct = ct.interpolate_with(pres, clampf(cigar_present, 0.0, 1.0))
 	if _flick_anim > 0.0:
 		# Wrist snap: quick rotation about the grip axis, ash goes with it.
 		var fk := 1.0 - _flick_anim / 0.35

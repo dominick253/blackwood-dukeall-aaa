@@ -158,3 +158,9 @@ side-silhouette coherence not fully passing at cap; front/3-quarter views pass.
 - C6 FP + TP: C toggles. FP eye lowered to 1.25 m + -0.12 pitch: hood + front tyres read in normal forward view (t01 AUTHORED). TP chase cam: 4.7 look_at oriented 180 deg off -> explicit right/up/forward basis. t65 whole mower + headlight pools, AUTHORED.
 - HUD: beer % fixed (was ratio of stale 0.7 default, showed 142%).
 - Tests: 34/34 Gut (11 new: grass pins, slosh world-level, drink chain, toss guard, camera toggle, cigar body shrink, flick drop).
+
+## Criteria lane final (v17): ash set piece + chase cam gated
+- t82_ash_long: cigar readable center-frame, 22 mm grey ash column past glowing ember - AUTHORED.
+- t83b_ash_falling: grey flakes drifting below cigar, ember clean, HUD ash 0 mm - AUTHORED.
+- Fix chain for invisible ash: (1) debris reparented off hidden ash column, (2) GPUParticles3D visibility_aabb set (default point AABB frustum-culls the burst), (3) slow-flake gravity, (4) cigar_present pose brings the set piece to frame center.
+- v17 harness: 1239 frames, 15.2 fps avg, 13.3 1%-low, 17 captures, 0 script errors. Gut 34/34.

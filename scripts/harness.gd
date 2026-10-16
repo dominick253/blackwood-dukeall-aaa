@@ -27,7 +27,7 @@ var capture_at := {
 	78.5: "t78_new_bottle",
 	82.0: "t82_ash_long",
 	83.3: "t83_ash_flicked",
-	83.7: "t83b_ash_falling",
+	83.6: "t83b_ash_falling",
 }
 var slosh_samples := []
 var slow_log: Array = []
@@ -187,6 +187,7 @@ func _process(delta: float) -> void:
 			mower.toggle_headlights()
 	if vm != null:
 		vm.inspect = 1.0 if (t >= 12.0 and t <= 18.0) or (t >= 41.0 and t <= 47.0) else 0.0
+		vm.cigar_present = 1.0 if (t >= 80.5 and t <= 84.2) else 0.0
 		var cam := get_viewport().get_camera_3d()
 		if cam != null:
 			# Telephoto director lens for the two bottle inspect captures.
