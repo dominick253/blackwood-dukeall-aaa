@@ -142,3 +142,10 @@ side-silhouette coherence not fully passing at cap; front/3-quarter views pass.
 - v6 (fog off, r10 terrain): 20.7 fps avg / 13.8 low.
 - All CPU: Xvfb + llvmpipe (no GPU). Floor, not target.
 - Aerial r10 reviewer note: PLACEHOLDER wording referred to absent scene context in an asset-isolated capture (rig loads terrain collection only); all three regression criteria passed. Context lives in in-game frames.
+
+## Runtime round 2 (v8-v10): alpha fix, sky, dusk choreography
+- Leaf canopies: luminance-faked alpha exported OPAQUE (in-game brown slabs). Real texture alpha -> glTF alphaMode BLEND. v8: canopies organic (reviewer-confirmed).
+- Sky: flat gradient -> authored cloud cover texture (assets/sky_clouds.png, horizon-weighted fbm bands) via ProceduralSkyMaterial.sky_cover, warm modulate. t01: AUTHORED (structure/depth confirmed).
+- Headlights: pools invisible at t=34s because harness ran the light set-piece at golden hour (sun 7.5 deg). Time-jump choreography: t=30 -> dn.time 700 (sun -1.3 deg), t=51 -> 870 (below horizon). t34: two warm pools with turf detail inside, noir mood. t52: true dusk + rising mist, AUTHORED.
+- Landmines logged in game skill: alpha-card exporter trap; Godot 4.7 Environment/sky property names (probe pattern).
+- Remaining known gaps vs literal-AAA: viewmodel hands blocky at 0.3m macro (pass at gameplay 0.5-0.8m, deviation stands); distant brick/grass micro-detail limited by 720p CPU render. All harness runs ~15 fps under llvmpipe (CPU), zero script errors.
