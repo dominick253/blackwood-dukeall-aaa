@@ -72,13 +72,13 @@ func _build_environment() -> void:
 	env.volumetric_fog_length = 60.0
 	env.volumetric_fog_detail_spread = 4.0
 	env.volumetric_fog_gi_inject = 0.0
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_mode = Environment.TONE_MAPPER_AGX
 
 	# Golden-hour sheen: glow on sun and headlights, gentle grade
 	env.glow_enabled = true
-	env.glow_strength = 0.35
-	env.glow_bloom = 0.04
-	env.glow_hdr_threshold = 1.1
+	env.glow_strength = 0.5
+	env.glow_bloom = 0.05
+	env.glow_hdr_threshold = 0.9
 	env.set("glow_levels/1", 0.15)
 	env.set("glow_levels/2", 0.25)
 	env.set("glow_levels/3", 0.25)
@@ -88,9 +88,11 @@ func _build_environment() -> void:
 	env.set("adjustment_saturation", 1.08)
 	env.set("adjustment_contrast", 1.05)
 
-	# Procedural sky sun glow (4.7 exposes sun_curve/sun_angle_max only)
+	# Procedural sky sun glow + authored cloud cover (4.7: sun_curve/sun_angle_max)
 	sky_mat.sun_curve = 0.6
 	sky_mat.sun_angle_max = 90.0
+	sky_mat.sky_cover = load("res://assets/sky_clouds.png")
+	sky_mat.sky_cover_modulate = Color(0.85, 0.55, 0.35)
 	we.environment = env
 	add_child(we)
 
@@ -98,7 +100,6 @@ func _build_environment() -> void:
 	sun.shadow_enabled = OS.get_environment("BDQ_NOSUNSH") == ""
 	sun.directional_shadow_max_distance = 110.0
 	sun.set_shadow_mode(DirectionalLight3D.SHADOW_ORTHOGONAL)
-	sun.directional_shadow_fade_split = 0.45
 	sun.light_angular_distance = 2.0
 	add_child(sun)
 
@@ -347,10 +348,10 @@ func _build_mower() -> void:
 	for tag in ["L", "R"]:
 		var spot := SpotLight3D.new()
 		spot.name = "headlight_" + tag
-		spot.spot_angle = 30.0
+		spot.spot_angle = 22.0
 		spot.set_param(Light3D.PARAM_VOLUMETRIC_FOG_ENERGY, 4.0)
-		spot.spot_range = 30.0
-		spot.light_energy = 3.2
+		spot.spot_range = 35.0
+		spot.light_energy = 10.0
 		spot.light_color = Color(1.0, 0.85, 0.65)
 		spot.shadow_enabled = false
 		spot.rotation_degrees = Vector3(-8, 0, 0)

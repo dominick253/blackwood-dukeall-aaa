@@ -88,4 +88,3 @@ godot_mcp={
 
 directional_shadow/atlas_size=4096
 anti_aliasing/quality/msaa_3d=2
-anti_aliasing/quality/msaa_2d=2
