@@ -26,7 +26,7 @@ const BRAKE_DECEL := 2.6
 
 var grid: MowGrid
 var view_yaw := 0.0
-var view_pitch := 0.0
+var view_pitch := -0.12  # mowing sightline: hood and front tyres in frame
 var steer_angle := 0.0
 var wheel_spin := 0.0
 var headlights_on := true
@@ -70,9 +70,10 @@ func attach_visuals(tyres: Dictionary, cam_pivot: Node3D, lights: Array) -> void
 	_tyre_nodes = tyres
 	_cam_pivot = cam_pivot
 	_lights = lights
-	for c in cam_pivot.get_children():
-		if c is Camera3D:
-			_fp_cam = c as Camera3D
+	if cam_pivot != null:
+		for c in cam_pivot.get_children():
+			if c is Camera3D:
+				_fp_cam = c as Camera3D
 
 
 func set_tp_cam(c: Camera3D) -> void:
@@ -85,10 +86,11 @@ func set_viewmodels(v: Node3D) -> void:
 
 func toggle_camera() -> void:
 	cam_mode = 1 - cam_mode
-	if _fp_cam != null:
-		_fp_cam.enabled = cam_mode == 0
+	# Godot 4.7: Camera3D has no `enabled`; the active camera is `current`.
 	if _tp_cam != null:
-		_tp_cam.enabled = cam_mode == 1
+		_tp_cam.current = cam_mode == 1
+	if _fp_cam != null:
+		_fp_cam.current = cam_mode == 0
 	if _vm != null:
 		_vm.visible = cam_mode == 0
 
@@ -276,9 +278,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	if cam_mode == 1 and _tp_cam != null:
-		# Chase rig: high three-quarter rear view, smoothed follow, always
-		# faces the machine so the whole mower reads against the estate.
+		# Chase rig: high three-quarter rear view, smoothed follow. Basis is
+		# built explicitly (right/up/forward) instead of look_at: the engine
+		# version's look_at oriented 180 deg off in the harness probe.
 		var target := to_global(Vector3(1.2, 2.35, 5.0))
 		var f := 1.0 - exp(-5.0 * delta)
-		_tp_cam.global_transform.origin = _tp_cam.global_transform.origin.lerp(target, f)
-		_tp_cam.look_at(global_position + Vector3(0.0, 1.0, 0.0), Vector3.UP, true)
+		var pos := _tp_cam.global_transform.origin.lerp(target, f)
+		var to_t := global_position + Vector3(0.0, 1.0, 0.0) - pos
+		if to_t.length_squared() > 1e-4:
+			var fr := to_t.normalized()
+			var rr := fr.cross(Vector3.UP)
+			if rr.length_squared() < 1e-6:
+				rr = Vector3.RIGHT
+			else:
+				rr = rr.normalized()
+			var uu := rr.cross(fr)
+			_tp_cam.global_transform = Transform3D(Basis(rr, uu, -fr), pos)

@@ -332,10 +332,13 @@ func _build_mower() -> void:
 
 	var cam_pivot := Node3D.new()
 	cam_pivot.name = "cam_pivot"
-	cam_pivot.position = Vector3(0, 1.05, 0.35)
+	# Eye at ~1.25 m: the operator sightline on a compact sit-on. Higher and
+	# the hood/front tyres fall outside the frame, breaking the brief's
+	# "first person shows the hood and front tyres" requirement.
+	cam_pivot.position = Vector3(0, 0.98, 0.35)
 	mower.add_child(cam_pivot)
 	var cam := Camera3D.new()
-	cam.position = Vector3(0, 0.35, 0)
+	cam.position = Vector3(0, 0.27, 0)
 	cam.near = 0.05
 	cam.far = 320.0
 	cam.current = true
@@ -349,7 +352,6 @@ func _build_mower() -> void:
 	tp.near = 0.25
 	tp.far = 400.0
 	tp.cull_mask = 0b01
-	tp.enabled = false
 	add_child(tp)
 	mower.set_tp_cam(tp)
 

@@ -106,6 +106,9 @@ func drop_ash() -> void:
 	if ash_node != null:
 		ash_node.visible = false
 	if debris != null:
+		# Catch the falling column to where the ash just was.
+		if ash_node != null and debris.get_parent() == ash_node.get_parent():
+			debris.position = (ash_node as Node3D).position
 		debris.emitting = true
 		get_tree().create_timer(0.6).timeout.connect(func() -> void: debris.emitting = false)
 	ash_dropped.emit(dropped)

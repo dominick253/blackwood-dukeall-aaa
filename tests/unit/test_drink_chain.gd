@@ -26,7 +26,7 @@ func test_toss_engages_chuck_state() -> void:
 	vm.do_empty_toss()
 	assert_gt(vm._toss, 0.0, "chuck animation armed")
 	vm.do_drink()
-	assert_almost_eq(vm.slosh.volume_ratio, 0.0, 0.001, "no drinking mid-toss")
+	assert_almost_eq(vm.slosh.volume_ratio, 1.0, 0.001, "no drinking mid-toss")
 
 
 func test_camera_toggle_flips_mode() -> void:

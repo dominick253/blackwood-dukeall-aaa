@@ -32,7 +32,7 @@ func _process(_delta: float) -> void:
 			sp,
 			int(left) / 60,
 			int(left) % 60,
-			int(GameState.beer_volume * 100.0 / 0.7),
+			int(clampf(GameState.beer_volume, 0.0, 1.0) * 100.0),
 			int(GameState.ash_length_m * 1000.0),
 		]
 	)

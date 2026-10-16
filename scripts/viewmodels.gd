@@ -338,24 +338,28 @@ func _setup_smoke(cig: Node) -> void:
 	dm.gravity = Vector3(0, -4, 0)
 	dm.initial_velocity_min = 0.05
 	dm.initial_velocity_max = 0.15
-	d.amount = 14
-	d.lifetime = 1.2
+	d.amount = 24
+	d.lifetime = 1.6
 	d.emitting = false
 	d.one_shot = true
 	var dmat := StandardMaterial3D.new()
-	dmat.albedo_color = Color(0.45, 0.44, 0.42)
+	dmat.albedo_color = Color(0.55, 0.54, 0.52)
 	dmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	dmat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	d.material_override = dmat
 	var dq := QuadMesh.new()
-	dq.size = Vector2(0.008, 0.008)
+	dq.size = Vector2(0.012, 0.012)
 	dq.material = dmat
 	d.draw_pass_1 = dq
 	var ap := _find(cig, "ash_pivot") as Node3D
 	if ap == null and cigar_sim != null:
 		ap = cigar_sim.ash_node as Node3D
+	# Debris lives on the cigar root, NOT the ash column: drop_ash hides
+	# the column, and children of a hidden node never render - the falling
+	# ash would be invisible exactly when it matters.
+	cig.add_child(d)
 	if ap != null:
-		ap.add_child(d)
+		d.position = ap.position
 	cigar_sim.debris = d
 
 

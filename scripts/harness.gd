@@ -26,7 +26,7 @@ var capture_at := {
 	76.0: "t76_bottle_toss",
 	78.5: "t78_new_bottle",
 	82.0: "t82_ash_long",
-	83.5: "t83_ash_flicked",
+	83.3: "t83_ash_flicked",
 }
 var slosh_samples := []
 var slow_log: Array = []
@@ -216,6 +216,25 @@ func _process(delta: float) -> void:
 		if absf(t - 83.0) < delta and not _flicked:
 			_flicked = true
 			vm.do_flick()
+	if OS.get_environment("BDQ_DBG") != "" and absf(t - 65.2) < delta:
+		var camx := get_viewport().get_camera_3d()
+		var mp := mower.get_node_or_null("tp_cam")
+		print(
+			(
+				"TPDBG active=%s mode=%d mower=%s mp=%s mpos=%s mrot=%s vp=%s"
+				% [
+					camx.name,
+					mower.cam_mode,
+					mp,
+					mower.get("_tp_cam"),
+					mower.global_position,
+					mower.global_rotation,
+					camx.global_position
+				]
+			)
+		)
+		if camx != null:
+			print("TPDBG2 rot=", camx.global_rotation, " fwd=", -camx.global_transform.basis.z)
 	if OS.get_environment("BDQ_DBG") != "" and t >= 44.0 and t < 44.0 + delta and vm != null:
 		var camd := get_viewport().get_camera_3d()
 		print(
