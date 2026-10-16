@@ -342,6 +342,9 @@ func _setup_smoke(cig: Node) -> void:
 	d.lifetime = 1.6
 	d.emitting = false
 	d.one_shot = true
+	# GPUParticles3D defaults to a point visibility_aabb and gets culled;
+	# give the falling column real fall envelope.
+	d.visibility_aabb = AABB(Vector3(-0.4, -1.6, -0.4), Vector3(0.8, 2.0, 0.8))
 	var dmat := StandardMaterial3D.new()
 	dmat.albedo_color = Color(0.55, 0.54, 0.52)
 	dmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

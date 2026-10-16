@@ -149,3 +149,12 @@ side-silhouette coherence not fully passing at cap; front/3-quarter views pass.
 - Headlights: pools invisible at t=34s because harness ran the light set-piece at golden hour (sun 7.5 deg). Time-jump choreography: t=30 -> dn.time 700 (sun -1.3 deg), t=51 -> 870 (below horizon). t34: two warm pools with turf detail inside, noir mood. t52: true dusk + rising mist, AUTHORED.
 - Landmines logged in game skill: alpha-card exporter trap; Godot 4.7 Environment/sky property names (probe pattern).
 - Remaining known gaps vs literal-AAA: viewmodel hands blocky at 0.3m macro (pass at gameplay 0.5-0.8m, deviation stands); distant brick/grass micro-detail limited by 720p CPU render. All harness runs ~15 fps under llvmpipe (CPU), zero script errors.
+
+## Criteria lane (2026-10-15 evening): brief criteria 2-6
+- C2 grass 12in -> 2.5in: tuft asset normalized to exactly 0.3048 m (GLB AABB probe), spawn scale 0.88-1.00, CUT_SCALE = 0.0635/0.3048. Reviewer: tall standing grass + 2-3 in stubble, AUTHORED.
+- C3 cigar burn-down + ash flick: body wrapper shrinks from burning end (scale.y + center rise), ash column builds, X flick snaps wrist + drops column. Debris first invisible twice: (a) parented to hidden ash node, (b) default point visibility_aabb frustum-culled. Fixed both.
+- C4 beer physics: slosh pendulum now applied in WORLD space: liquid stays level when bottle tips for a drink.
+- C5 drink-to-empty: linear 12 % slug per drink (visible level drop), 8th drink depletes -> wind-up throw + real RigidBody3D bottle flung into the estate (tumbles, lands, despawns 12 s) -> fresh full bottle rises into frame. t76 throw AUTHORED, t78 fresh full bottle AUTHORED.
+- C6 FP + TP: C toggles. FP eye lowered to 1.25 m + -0.12 pitch: hood + front tyres read in normal forward view (t01 AUTHORED). TP chase cam: 4.7 look_at oriented 180 deg off -> explicit right/up/forward basis. t65 whole mower + headlight pools, AUTHORED.
+- HUD: beer % fixed (was ratio of stale 0.7 default, showed 142%).
+- Tests: 34/34 Gut (11 new: grass pins, slosh world-level, drink chain, toss guard, camera toggle, cigar body shrink, flick drop).

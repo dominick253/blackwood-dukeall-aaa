@@ -27,6 +27,7 @@ var capture_at := {
 	78.5: "t78_new_bottle",
 	82.0: "t82_ash_long",
 	83.3: "t83_ash_flicked",
+	83.7: "t83b_ash_falling",
 }
 var slosh_samples := []
 var slow_log: Array = []
