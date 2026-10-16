@@ -27,6 +27,10 @@ var _sway := Vector3.ZERO
 var _bead_rng := RandomNumberGenerator.new()
 var _drink_anim := 0.0
 var _puff_anim := 0.0
+var _flick_anim := 0.0
+var _toss := 0.0  # >0: empty-bottle chuck animation running
+var _toss_spawned := false
+var _refill := 0.0  # >0: fresh bottle rising into frame
 
 var _rest_bottle := Transform3D(
 	Basis.from_euler(Vector3(0.18, 0.0, -0.25)), Vector3(-0.26, -0.24, -0.52)
@@ -111,6 +115,7 @@ func build(vm_scene: PackedScene) -> void:
 	cigar_sim.name = "CigarSim"
 	cigar_sim.ember = _find(cigar_root, "cigar_ember")
 	cigar_sim.ash_node = _find(cigar_root, "cigar_ash")
+	cigar_sim.body_node = _find(cigar_root, "cigar_body") as MeshInstance3D
 	if cigar_sim.ember != null:
 		cigar_sim.y_anchor = (cigar_sim.ember as Node3D).position.y
 	_setup_smoke(cigar_root)
@@ -369,10 +374,12 @@ func _process(delta: float) -> void:
 
 	_update_beads(delta)
 	if _beer != null and slosh != null:
-		var vr := clampf(slosh.volume_ratio, 0.05, 1.0)
-		_beer.scale = Vector3(1.0, vr, 1.0)
+		var vr := clampf(slosh.volume_ratio, 0.0, 1.0)
+		_beer.visible = vr > 0.02
+		_beer.scale = Vector3(1.0, maxf(vr, 0.02), 1.0)
 		_beer.position.y = _beer_base_y - 0.08 * (1.0 - vr)
 		if _foam != null:
+			_foam.visible = vr > 0.02
 			_foam.position.y = _foam_base_y + 0.08 * (vr - 1.0)
 	_drink_anim = maxf(0.0, _drink_anim - delta)
 	_puff_anim = maxf(0.0, _puff_anim - delta)
@@ -390,6 +397,31 @@ func _process(delta: float) -> void:
 		lift = sin(clampf(1.0 - _drink_anim / 1.2, 0.0, 1.0) * PI)
 	bt.origin += Vector3(0.06 * lift, 0.10 * lift, 0.06 * lift)
 	bt.basis = bt.basis.rotated(Vector3.RIGHT, -0.55 * lift)
+	if _toss > 0.0:
+		# Empty: swing the bottle out right and chuck it into the world.
+		var k := clampf(1.0 - _toss / 1.3, 0.0, 1.0)
+		var throw_pose := Transform3D(
+			Basis.from_euler(Vector3(0.7, 1.1, -0.5)), Vector3(0.85, -0.50, -0.10)
+		)
+		bt = bt.interpolate_with(throw_pose, clampf(k / 0.45, 0.0, 1.0))
+		if k >= 0.45 and not _toss_spawned:
+			_spawn_thrown_bottle()
+			_toss_spawned = true
+		_toss -= delta
+		if _toss <= 0.0:
+			# Fresh full bottle comes in from off-frame.
+			if slosh != null:
+				slosh.volume_ratio = 1.0
+				slosh.theta_x = 0.0
+				slosh.theta_z = 0.0
+				slosh.jiggle = 0.0
+				slosh.jiggle_vel = 0.0
+			GameState.beer_volume = 1.0
+			GameState.bottles_chucked += 1
+			_refill = 0.5
+	elif _refill > 0.0:
+		bt.origin.y -= 0.55 * clampf(_refill / 0.5, 0.0, 1.0)
+		_refill -= delta
 	bt.origin += Vector3(0, bob, 0) + _sway
 	bt.origin += recoil
 	bottle_root.transform = bt
@@ -400,6 +432,11 @@ func _process(delta: float) -> void:
 	ct.origin += Vector3(0, bob + bob2, 0) + _sway * 0.8
 	ct.origin += recoil
 	ct.basis = Basis.from_euler(Vector3(0.10 + 0.02 * sin(_bob_t * 0.7), 0.0, 0.35))
+	if _flick_anim > 0.0:
+		# Wrist snap: quick rotation about the grip axis, ash goes with it.
+		var fk := 1.0 - _flick_anim / 0.35
+		ct.basis = ct.basis.rotated(Vector3.RIGHT, -0.85 * sin(fk * PI))
+		_flick_anim -= delta
 	cigar_root.transform = ct
 	if hands_r != null:
 		hands_r.transform = Transform3D(ct.basis, ct * _hand_r_local)
@@ -414,6 +451,9 @@ func _process(delta: float) -> void:
 		if mower.puff_requested:
 			mower.puff_requested = false
 			do_puff()
+		if mower.ash_requested:
+			mower.ash_requested = false
+			do_flick()
 
 
 func mower_view_angular() -> float:
@@ -423,11 +463,77 @@ func mower_view_angular() -> float:
 
 
 func do_drink() -> void:
+	if _toss > 0.0 or _refill > 0.0:
+		return
 	_drink_anim = 1.2
 	if slosh != null:
-		slosh.drain_fraction(0.10)
+		# Each drink takes a visible slug: 12 % of full, linear, so the
+		# level drop per sip is the same at full bottle as near empty.
+		slosh.volume_ratio = maxf(slosh.volume_ratio - 0.12, 0.0)
 		slosh.jiggle_vel += 0.08
-	GameState.beer_volume = maxf(GameState.beer_volume * 0.9, 0.0)
+	GameState.beer_volume = slosh.volume_ratio if slosh != null else 0.0
+	if slosh != null and slosh.volume_ratio <= 0.045:
+		# Depleted: after the drink motion, chuck it and grab a fresh one.
+		get_tree().create_timer(0.9).timeout.connect(do_empty_toss)
+
+
+func do_empty_toss() -> void:
+	if _toss > 0.0:
+		return
+	_toss = 1.3
+	_toss_spawned = false
+
+
+func _spawn_thrown_bottle() -> void:
+	## Real physics bottle flung into the distance: it tumbles under gravity
+	## and lands on the estate. Lives in the world, not the viewmodel layer.
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	var rb := RigidBody3D.new()
+	var mi := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.033
+	cyl.bottom_radius = 0.033
+	cyl.height = 0.22
+	mi.mesh = cyl
+	var bm := StandardMaterial3D.new()
+	bm.albedo_color = Color(0.15, 0.28, 0.16, 0.85)
+	bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	bm.roughness = 0.08
+	bm.metallic_specular = 1.2
+	mi.material_override = bm
+	rb.add_child(mi)
+	var cs := CollisionShape3D.new()
+	var sh := CylinderShape3D.new()
+	sh.radius = 0.033
+	sh.height = 0.22
+	cs.shape = sh
+	rb.add_child(cs)
+	rb.mass = 0.4
+	var world := get_tree().current_scene
+	world.add_child(rb)
+	rb.global_transform = Transform3D(
+		cam.global_transform.basis.rotated(Vector3.RIGHT, randf_range(-0.7, 0.7)),
+		cam.global_transform.origin - cam.global_transform.basis.z * 0.35
+		+ Vector3(0.2, -0.15, 0.0)
+	)
+	var fwd := -cam.global_transform.basis.z
+	rb.linear_velocity = fwd * 11.0 + Vector3(0.0, 3.2, 0.0)
+	rb.angular_velocity = Vector3(
+		randf_range(-9.0, 9.0), randf_range(-6.0, 6.0), randf_range(-9.0, 9.0)
+	)
+	get_tree().create_timer(12.0).timeout.connect(
+		func() -> void:
+			if is_instance_valid(rb):
+				rb.queue_free()
+	)
+
+
+func do_flick() -> void:
+	_flick_anim = 0.35
+	if cigar_sim != null:
+		cigar_sim.drop_ash()
 
 
 func do_puff() -> void:

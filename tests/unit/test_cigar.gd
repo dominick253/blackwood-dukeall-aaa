@@ -56,3 +56,25 @@ func test_ember_pulse_oscillates() -> void:
 	var hi: float = vals.max()
 	assert_lt(lo, 0.2, "ember pulse reaches low")
 	assert_gt(hi, 0.8, "ember pulse reaches high")
+
+
+func test_body_shortens_as_it_burns() -> void:
+	var s := CigarSim.new()
+	var body := MeshInstance3D.new()
+	body.position = Vector3(0.0, 0.06, 0.0)
+	s.body_node = body
+	s.add_child(body)
+	add_child(s)  # _ready captures the base y
+	for i in 600:
+		s._physics_process(1.0)
+	assert_lt(body.scale.y, 0.4, "wrapper shrinks past 40% by half burn")
+	assert_gt(body.position.y, 0.06, "center rises as the burning end eats in")
+	assert_lt(body.position.y, 0.06 + 0.045, "mouth end stays put")
+
+
+func test_flick_drops_full_ash_column() -> void:
+	_ticks(200, 1.0)
+	watch_signals(sim)
+	sim.drop_ash()
+	assert_signal_emitted(sim, "ash_dropped", "flick knocks the column off")
+	assert_almost_eq(sim.ash_len, 0.0, 1e-9, "ash reset after flick")

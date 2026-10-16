@@ -19,6 +19,9 @@ var y_anchor := 0.059  # ember rest height in the cigar group frame
 var ember: MeshInstance3D
 var ember_mat: StandardMaterial3D
 var ash_node: MeshInstance3D
+var body_node: MeshInstance3D  # cigar_body, shrinks as the burn eats it
+var _body_base_y := 0.0
+const BODY_LEN := 0.140
 var smoke: GPUParticles3D
 var smoke_mat: ParticleProcessMaterial
 var debris: GPUParticles3D
@@ -30,6 +33,8 @@ func _ready() -> void:
 		ember_mat = ember.get_active_material(0) as StandardMaterial3D
 	if smoke != null:
 		smoke_mat = smoke.process_material as ParticleProcessMaterial
+	if body_node != null:
+		_body_base_y = body_node.position.y
 
 
 func _physics_process(delta: float) -> void:
@@ -47,6 +52,12 @@ func _physics_process(delta: float) -> void:
 			ember.position.y = y_anchor - burn_m
 			if ash_node != null:
 				ash_node.position.y = y_anchor - burn_m - ash_len * 0.5
+		if body_node != null:
+			# The wrapper shortens from the burning end: top (mouth) end
+			# stays put, center rises as length shrinks.
+			var bl := maxf(BODY_LEN - burn_m, 0.012)
+			body_node.scale.y = bl / BODY_LEN
+			body_node.position.y = _body_base_y + (BODY_LEN - bl) * 0.5
 	GameState.ash_length_m = ash_len
 	_update_ember(delta)
 	_update_smoke()

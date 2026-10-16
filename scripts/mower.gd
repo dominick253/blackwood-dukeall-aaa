@@ -32,12 +32,17 @@ var wheel_spin := 0.0
 var headlights_on := true
 var drink_requested := false
 var puff_requested := false
+var ash_requested := false
+var cam_mode := 0  # 0 = first person (hood + front tyres in view), 1 = chase
 
 # Harness/virtual input override; null means use real input.
 var virtual: Dictionary = {}
 
 var _wheels: Array = []
 var _cam_pivot: Node3D
+var _fp_cam: Camera3D
+var _tp_cam: Camera3D
+var _vm: Node3D
 var _lights: Array = []
 var _tyre_nodes := {}
 var _prev_compression := {}
@@ -65,6 +70,27 @@ func attach_visuals(tyres: Dictionary, cam_pivot: Node3D, lights: Array) -> void
 	_tyre_nodes = tyres
 	_cam_pivot = cam_pivot
 	_lights = lights
+	for c in cam_pivot.get_children():
+		if c is Camera3D:
+			_fp_cam = c as Camera3D
+
+
+func set_tp_cam(c: Camera3D) -> void:
+	_tp_cam = c
+
+
+func set_viewmodels(v: Node3D) -> void:
+	_vm = v
+
+
+func toggle_camera() -> void:
+	cam_mode = 1 - cam_mode
+	if _fp_cam != null:
+		_fp_cam.enabled = cam_mode == 0
+	if _tp_cam != null:
+		_tp_cam.enabled = cam_mode == 1
+	if _vm != null:
+		_vm.visible = cam_mode == 0
 
 
 func set_virtual_input(throttle: float, steer: float, brake: bool, fast: bool) -> void:
@@ -237,8 +263,22 @@ func _unhandled_input(event: InputEvent) -> void:
 				drink_requested = true
 			KEY_Q:
 				puff_requested = true
+			KEY_X:
+				ash_requested = true
+			KEY_C:
+				toggle_camera()
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		view_yaw -= event.relative.x * 0.0025
 		view_pitch = clampf(view_pitch - event.relative.y * 0.0025, -1.0, 0.7)
 		if _cam_pivot != null:
 			_cam_pivot.rotation.y = fmod(view_yaw, TAU)
+
+
+func _process(delta: float) -> void:
+	if cam_mode == 1 and _tp_cam != null:
+		# Chase rig: high three-quarter rear view, smoothed follow, always
+		# faces the machine so the whole mower reads against the estate.
+		var target := to_global(Vector3(1.2, 2.35, 5.0))
+		var f := 1.0 - exp(-5.0 * delta)
+		_tp_cam.global_transform.origin = _tp_cam.global_transform.origin.lerp(target, f)
+		_tp_cam.look_at(global_position + Vector3(0.0, 1.0, 0.0), Vector3.UP, true)

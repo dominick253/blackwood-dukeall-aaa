@@ -75,7 +75,11 @@ func _mower_local_accel(_delta: float) -> Vector3:
 
 
 func _apply() -> void:
-	rotation = Vector3(theta_z, 0.0, theta_x)
+	# The liquid surface stays level with world gravity: the pendulum angles
+	# are deviations from world-level, so they are applied in world space.
+	# When the bottle tips for a drink, the beer counter-rotates and stays
+	# horizontal inside the tilted glass.
+	global_transform.basis = Basis.from_euler(Vector3(theta_z, 0.0, theta_x))
 	if surface != null:
 		surface.position.y = jiggle
 		surface.scale = Vector3(1.0, maxf(volume_ratio, 0.05), 1.0)

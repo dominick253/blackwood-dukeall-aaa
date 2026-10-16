@@ -5,7 +5,12 @@ extends Node3D
 
 const TUFTS_PER_M2 := 16.0
 const CHUNK_CELLS := 5
-const CUT_SCALE := 0.25
+# Pinned by brief: grass stands 12 in (0.3048 m) at game start, cut to
+# 2.5 in (0.0635 m). The tuft asset is authored so its tallest blade is
+# 0.3048 m at instance scale 1.0; the spawn scale band stays <= 1.0.
+const GRASS_TALL_M := 0.3048
+const GRASS_CUT_M := 0.0635
+const CUT_SCALE := GRASS_CUT_M / GRASS_TALL_M
 
 var grid: MowGrid
 var tuft_mesh: Mesh
@@ -50,7 +55,7 @@ func _chunk_build(c: Vector2i) -> void:
 				var wx := MowGrid.ORIGIN.x + lx
 				var wz := MowGrid.ORIGIN.z + lz
 				var y := heightmap.height_at(wx, wz)
-				var s := 1.15 + rng.randf() * 0.55
+				var s := 0.88 + rng.randf() * 0.12
 				var rot := rng.randf_range(0.0, TAU)
 				var xf := Transform3D(
 					Basis(Vector3.UP, rot).scaled(Vector3(s, 1.0, s)), Vector3(wx, y, wz)

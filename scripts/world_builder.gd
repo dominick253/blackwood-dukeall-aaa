@@ -342,6 +342,17 @@ func _build_mower() -> void:
 	cam.cull_mask = 0b11
 	cam_pivot.add_child(cam)
 
+	# Third-person chase camera (toggled with C): world layer only, starts
+	# disabled; the mower rig drives its follow when cam_mode == 1.
+	var tp := Camera3D.new()
+	tp.name = "tp_cam"
+	tp.near = 0.25
+	tp.far = 400.0
+	tp.cull_mask = 0b01
+	tp.enabled = false
+	add_child(tp)
+	mower.set_tp_cam(tp)
+
 	var lights: Array = []
 	# Work lights ride the camera pivot: the beam follows where the operator
 	# looks, which is also where the dusk captures need the turf lit.
@@ -397,6 +408,7 @@ func _build_viewmodels(cam: Camera3D) -> void:
 	var vmg: PackedScene = _gltf("res://assets/viewmodel.glb")
 	vmr.build(vmg)
 	vmr.set_mower(mower)
+	mower.set_viewmodels(vmr)
 	vmr.apply_layer(2)
 	if OS.get_environment("BDQ_DBG") != "":
 		var b0 = vmr.get("beads_static")

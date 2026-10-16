@@ -22,6 +22,11 @@ var capture_at := {
 	46.0: "t46_puff_smoke",
 	52.0: "t52_dusk_start",
 	59.0: "t59_dusk_end",
+	65.0: "t65_third_person",
+	76.0: "t76_bottle_toss",
+	78.5: "t78_new_bottle",
+	82.0: "t82_ash_long",
+	83.5: "t83_ash_flicked",
 }
 var slosh_samples := []
 var slow_log: Array = []
@@ -33,6 +38,11 @@ var _stuck := 0.0
 var _rev := 0.0
 var _puffed := false
 var _puffed2 := false
+var _cam_tp := false
+var _cam_fp := false
+var _drinks_done := 0
+var _ash_set := false
+var _flicked := false
 
 
 func _ready() -> void:
@@ -137,8 +147,11 @@ func _process(delta: float) -> void:
 	if dn != null:
 		if t >= 50.0 and t < 58.0:
 			dn.set_time(600.0)
-		elif t >= 58.0:
+		elif t >= 58.0 and t < 68.0:
 			dn.set_time(895.0)
+		elif t >= 68.0:
+			# Afternoon light for the bottle-toss and ash-flick set pieces.
+			dn.set_time(240.0)
 	for stamp in capture_at.keys():
 		if t >= stamp and not capture_at[stamp] in frames:
 			_capture(capture_at[stamp])
@@ -186,6 +199,23 @@ func _process(delta: float) -> void:
 		if absf(t - 55.0) < delta and not _puffed2:
 			_puffed2 = true
 			vm.do_puff()
+		if absf(t - 61.0) < delta and not _cam_tp and mower != null:
+			_cam_tp = true
+			mower.toggle_camera()  # -> third-person chase
+		if absf(t - 67.5) < delta and not _cam_fp and mower != null:
+			_cam_fp = true
+			mower.toggle_camera()  # -> back to first person
+		if t >= 70.0 and _drinks_done < 8 and fmod(t - 70.0, 0.7) < delta:
+			# Drain the bottle to empty: each sip is a visible 12 % slug;
+			# the eighth triggers the chuck-and-replace set piece.
+			_drinks_done += 1
+			vm.do_drink()
+		if t >= 81.0 and not _ash_set and vm.cigar_sim != null:
+			_ash_set = true
+			vm.cigar_sim.ash_len = 0.022  # long ash column, awaiting flick
+		if absf(t - 83.0) < delta and not _flicked:
+			_flicked = true
+			vm.do_flick()
 	if OS.get_environment("BDQ_DBG") != "" and t >= 44.0 and t < 44.0 + delta and vm != null:
 		var camd := get_viewport().get_camera_3d()
 		print(
@@ -224,7 +254,7 @@ func _process(delta: float) -> void:
 			)
 		else:
 			print("SMOKE missing cigar_sim=", vm.cigar_sim != null)
-	if t >= 60.0:
+	if t >= 85.0:
 		_finish()
 
 

@@ -14,7 +14,7 @@ func _ready() -> void:
 	help.position = Vector2(16, 660)
 	help.add_theme_font_size_override("font_size", 13)
 	help.modulate = Color(1, 1, 1, 0.6)
-	help.text = "W/S throttle  A/D steer  Space brake  Shift fast  R lights  E beer  Q cigar"
+	help.text = "W/S throttle  A/D steer  Space brake  Shift fast  R lights  E beer  Q cigar  X ash  C camera"
 	add_child(help)
 
 
