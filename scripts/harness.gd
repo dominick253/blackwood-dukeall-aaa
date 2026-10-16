@@ -162,6 +162,11 @@ func _process(delta: float) -> void:
 				)
 			)
 	if mower != null:
+		# Time-jump choreography: light/dusk set pieces need their real light.
+		if absf(t - 30.0) < delta and dn != null:
+			dn.time = 700.0  # sun ~ -1.3 deg: headlights must carry the scene
+		if absf(t - 51.0) < delta and dn != null:
+			dn.time = 870.0  # sun below horizon: true dusk, rising mist
 		if absf(t - 31.0) < delta:
 			mower.toggle_headlights()
 		if absf(t - 34.0) < delta:
